@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>StackEdit.js Loader + CodeMirror</title>
+  <title>StackEdit.js Loader + CodeMirror (Dracula)</title>
 
   <!-- Beer CSS et Material Dynamic Colors -->
   <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.css" rel="stylesheet" />
@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/theme/dracula.min.css" />
 
-  <!-- CodeMirror : scripts de base + modes requis -->
+  <!-- CodeMirror : scripts de base + modes requis pour GFM -->
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/xml/xml.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/mode/overlay.js"></script>
@@ -25,6 +25,7 @@
       max-width: 800px;
       margin: 2rem auto;
     }
+
     /* Conteneur CodeMirror redimensionnable en hauteur */
     #editor {
       resize: vertical;       /* Permet le redimensionnement vertical */
@@ -34,11 +35,13 @@
       margin-bottom: 1rem;
       min-height: 300px;      /* Hauteur minimale */
     }
+
     /* Ajustements CodeMirror pour qu'il suive la hauteur du conteneur */
     .CodeMirror {
       height: auto;
       min-height: 300px;      /* Même valeur que le conteneur */
     }
+
     .button-container {
       margin-top: 1rem;
       display: flex;
@@ -51,6 +54,36 @@
       background: #333;
       color: #fff;
       border-radius: 3px;
+    }
+
+    /*
+      Surcharge du thème Dracula pour mieux distinguer
+      certains éléments Markdown (titres, gras, italique…).
+      Vous pouvez ajuster ces couleurs à votre goût.
+    */
+    .cm-header {
+      color: #ff79c6;         /* Titres (#, ##, etc.) en rose Dracula */
+    }
+    .cm-strong {
+      color: #f1fa8c;         /* Texte en gras */
+    }
+    .cm-em {
+      color: #50fa7b;         /* Texte en italique */
+      font-style: italic;
+    }
+    .cm-link, .cm-url {
+      color: #8be9fd;         /* Liens */
+      text-decoration: underline;
+    }
+    .cm-code {
+      color: #ffb86c;         /* Code inline (`code`) */
+    }
+    .cm-quote {
+      color: #bd93f9;         /* Blockquotes (>) */
+      font-style: italic;
+    }
+    .cm-list-2, .cm-list-3 {
+      color: #bd93f9;         /* Listes imbriquées */
     }
   </style>
 </head>
