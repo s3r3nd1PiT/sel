@@ -7,60 +7,87 @@
   <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.css" rel="stylesheet" />
   <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+
   <!-- Highlight.js avec le thème github-dark -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
   <style>
     body {
       max-width: 800px;
       margin: 2rem auto;
     }
-    /* Conteneur de l'éditeur simulé */
+
+    /* Conteneur de l'éditeur */
     #editor-container {
       position: relative;
-      font-family: monospace;
-      line-height: 1.5;
       border: 1px solid #ccc;
       border-radius: 3px;
       overflow: hidden;
+      font-family: monospace;
+      line-height: 1.5;
     }
-    /* Le bloc qui affichera le Markdown avec coloration */
+
+    /* Bloc de code coloré par highlight.js */
     #editor-container pre {
       margin: 0;
       padding: 1rem;
-      overflow: auto;
+      /* Empêche la sélection et les clics dans le bloc de code */
+      pointer-events: none;
+      user-select: none;
+
+      /* Pour que le texte "wrap" comme dans le textarea */
       white-space: pre-wrap;
       word-wrap: break-word;
+      overflow: auto;
       min-height: 15em;
-      /* Ce bloc est en lecture seule */
-      pointer-events: none;
     }
+
+    /* Le <code> lui-même */
+    #highlighted-code {
+      font-size: 1rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
     /* Le textarea transparent pour la saisie */
     #editor-container textarea {
       position: absolute;
       top: 0;
       left: 0;
+      margin: 0;
+      padding: 1rem;
       width: 100%;
       height: 100%;
-      resize: vertical;
-      background: transparent;
-      /* Le texte est rendu transparent pour laisser apparaître le highlighting en dessous */
-      color: transparent;
-      caret-color: #fff;
-      padding: 1rem;
       border: none;
       outline: none;
-      font-family: inherit;
-      font-size: inherit;
-      line-height: inherit;
-      overflow: auto;
+      resize: vertical;
+      background: transparent;
+      /* Masque le texte, même lors de la sélection */
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      caret-color: #fff;
+
+      /* Même font-size et line-height que le bloc code */
+      font-family: monospace;
+      font-size: 1rem;
+      line-height: 1.5;
+
+      /* Pour gérer les retours à la ligne comme le code */
+      white-space: pre-wrap;
+      word-wrap: break-word;
+
       z-index: 2;
     }
+
+    /* Boutons en bas */
     .button-container {
       margin-top: 1rem;
       display: flex;
       gap: 1rem;
     }
+
     button {
       padding: 0.5rem 1rem;
       border: none;
@@ -83,7 +110,7 @@
   <main>
     <!-- Zone d'édition avec overlay pour la coloration syntaxique -->
     <div id="editor-container">
-      <pre class="highlighted-content" aria-hidden="true">
+      <pre>
         <code id="highlighted-code" class="markdown"></code>
       </pre>
       <textarea id="markdown" placeholder="Le contenu Markdown chargé s’affichera ici..." rows="15"></textarea>
@@ -107,14 +134,14 @@
         codeElement.textContent = textarea.value;
         hljs.highlightElement(codeElement);
       }
-      
+
       // Synchronisation du défilement entre textarea et bloc de code
       textarea.addEventListener("scroll", function() {
         var pre = document.querySelector("#editor-container pre");
         pre.scrollTop = textarea.scrollTop;
         pre.scrollLeft = textarea.scrollLeft;
       });
-      
+
       // Actualisation en temps réel lors de la saisie
       textarea.addEventListener("input", updateHighlighting);
 
@@ -159,11 +186,10 @@
             var fileNames = Object.keys(files);
             if (fileNames.length > 0) {
               textarea.value = files[fileNames[0]].content;
-              updateHighlighting();
             } else {
               textarea.value = "Aucun fichier trouvé dans ce gist.";
-              updateHighlighting();
             }
+            updateHighlighting();
           })
           .catch(function(error) {
             console.error("Erreur :", error);
