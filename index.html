@@ -3,21 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <title>StackEdit.js Loader</title>
+  <!-- Beer CSS et Material Dynamic Colors -->
   <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.css" rel="stylesheet" />
   <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+  <!-- Highlight.js avec le thème github-dark -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
   <style>
     body {
       max-width: 800px;
       margin: 2rem auto;
     }
-    textarea {
-      width: 100%;
+    /* Conteneur de l'éditeur simulé */
+    #editor-container {
+      position: relative;
       font-family: monospace;
-      font-size: 1rem;
+      line-height: 1.5;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    /* Le bloc qui affichera le Markdown avec coloration */
+    #editor-container pre {
+      margin: 0;
       padding: 1rem;
-      box-sizing: border-box;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      min-height: 15em;
+      /* Ce bloc est en lecture seule */
+      pointer-events: none;
+    }
+    /* Le textarea transparent pour la saisie */
+    #editor-container textarea {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       resize: vertical;
+      background: transparent;
+      /* Le texte est rendu transparent pour laisser apparaître le highlighting en dessous */
+      color: transparent;
+      caret-color: #fff;
+      padding: 1rem;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      overflow: auto;
+      z-index: 2;
     }
     .button-container {
       margin-top: 1rem;
@@ -44,22 +81,47 @@
   </header>
 
   <main>
-    <textarea id="markdown" placeholder="Le contenu Markdown chargé s’affichera ici..." rows="15"></textarea>
+    <!-- Zone d'édition avec overlay pour la coloration syntaxique -->
+    <div id="editor-container">
+      <pre class="highlighted-content" aria-hidden="true">
+        <code id="highlighted-code" class="markdown"></code>
+      </pre>
+      <textarea id="markdown" placeholder="Le contenu Markdown chargé s’affichera ici..." rows="15"></textarea>
+    </div>
     <div class="button-container">
       <button id="editStackEdit">Ouvrir dans StackEdit</button>
       <button id="copyTextButton">✂️ Copier</button>
     </div>
   </main>
 
+  <!-- StackEdit.js -->
   <script src="https://unpkg.com/stackedit-js@1.0.7/docs/lib/stackedit.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       var textarea = document.getElementById("markdown");
+      var codeElement = document.getElementById("highlighted-code");
       var stackedit = new Stackedit();
 
-      // Mise à jour du contenu du textarea lorsque StackEdit signale un changement
+      // Met à jour le bloc de code avec la coloration via highlight.js
+      function updateHighlighting() {
+        codeElement.textContent = textarea.value;
+        hljs.highlightElement(codeElement);
+      }
+      
+      // Synchronisation du défilement entre textarea et bloc de code
+      textarea.addEventListener("scroll", function() {
+        var pre = document.querySelector("#editor-container pre");
+        pre.scrollTop = textarea.scrollTop;
+        pre.scrollLeft = textarea.scrollLeft;
+      });
+      
+      // Actualisation en temps réel lors de la saisie
+      textarea.addEventListener("input", updateHighlighting);
+
+      // Mise à jour lors d'un changement dans StackEdit
       stackedit.on('fileChange', function(file) {
         textarea.value = file.content.text;
+        updateHighlighting();
       });
 
       // Fonction de chargement d'un fichier Markdown depuis une URL
@@ -73,10 +135,12 @@
           })
           .then(function(data) {
             textarea.value = data;
+            updateHighlighting();
           })
           .catch(function(error) {
             console.error("Erreur :", error);
             textarea.value = "Erreur lors du chargement du fichier : " + error.message;
+            updateHighlighting();
           });
       }
 
@@ -95,17 +159,20 @@
             var fileNames = Object.keys(files);
             if (fileNames.length > 0) {
               textarea.value = files[fileNames[0]].content;
+              updateHighlighting();
             } else {
               textarea.value = "Aucun fichier trouvé dans ce gist.";
+              updateHighlighting();
             }
           })
           .catch(function(error) {
             console.error("Erreur :", error);
             textarea.value = "Erreur lors du chargement du gist : " + error.message;
+            updateHighlighting();
           });
       }
 
-      // Analyse de la partie hash de l'URL
+      // Analyse de la partie hash de l'URL pour charger un fichier ou un gist
       if (window.location.hash) {
         var hash = window.location.hash;
         if (hash.startsWith("#!url:")) {
@@ -120,6 +187,7 @@
             loadGist(username, gistId);
           } else {
             textarea.value = "Format de gist invalide. Utilisez : #!gist:username/gist-id";
+            updateHighlighting();
           }
         }
       }
