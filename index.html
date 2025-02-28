@@ -2,25 +2,46 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>StackEdit.js Loader + CodeMirror 6</title>
+  <title>StackEdit.js Loader + CodeMirror (Dracula)</title>
+
   <!-- Beer CSS et Material Dynamic Colors -->
   <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.css" rel="stylesheet" />
   <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+
+  <!-- CodeMirror : CSS de base + thème Dracula -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/theme/dracula.min.css" />
+
+  <!-- CodeMirror : scripts de base + modes requis pour GFM -->
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/xml/xml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/mode/overlay.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/markdown/markdown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/gfm/gfm.js"></script>
+
   <style>
     body {
       max-width: 800px;
       margin: 2rem auto;
-      font-family: sans-serif;
     }
-    /* Conteneur redimensionnable pour CodeMirror 6 */
+
+    /* Conteneur CodeMirror redimensionnable en hauteur */
     #editor {
-      resize: vertical;
-      overflow: auto;
+      resize: vertical;       /* Permet le redimensionnement vertical */
+      overflow: auto;         /* Barres de défilement si nécessaire */
       border: 1px solid #ccc;
       border-radius: 4px;
-      min-height: 300px;
+      margin-bottom: 1rem;
+      min-height: 300px;      /* Hauteur minimale */
     }
+
+    /* Ajustements CodeMirror pour qu'il suive la hauteur du conteneur */
+    .CodeMirror {
+      height: auto;
+      min-height: 300px;      /* Même valeur que le conteneur */
+    }
+
     .button-container {
       margin-top: 1rem;
       display: flex;
@@ -34,153 +55,166 @@
       color: #fff;
       border-radius: 3px;
     }
+
+    /*
+      Surcharge du thème Dracula pour mieux distinguer
+      certains éléments Markdown (titres, gras, italique…).
+    */
+    .cm-header {
+      color: #ff79c6;         /* Titres (#, ##, etc.) en rose Dracula */
+    }
+    .cm-strong {
+      color: #f1fa8c;         /* Texte en gras */
+    }
+    .cm-em {
+      color: #50fa7b;         /* Texte en italique */
+      font-style: italic;
+    }
+    .cm-link, .cm-url {
+      color: #8be9fd;         /* Liens */
+      text-decoration: underline;
+    }
+    .cm-code {
+      color: #ffb86c;         /* Code inline (`code`) */
+    }
+    .cm-quote {
+      color: #bd93f9;         /* Blockquotes (>) */
+      font-style: italic;
+    }
+    .cm-list-2, .cm-list-3 {
+      color: #bd93f9;         /* Listes imbriquées */
+    }
   </style>
 </head>
 <body>
-  <header>
+<!--  <header>
     <h1>StackEdit.js Loader</h1>
     <p>
       Chargez un fichier Markdown en passant dans l’URL l’un des formats suivants :<br>
       <code>#!url:https://url-du-fichier.md</code> ou <code>#!gist:username/gist-id</code>
     </p>
-  </header>
+  </header> -->
+
   <main>
-    <!-- Zone d'édition pour CodeMirror 6 -->
+    <!-- Zone d'édition CodeMirror -->
     <div id="editor"></div>
     <div class="button-container">
       <button id="editStackEdit">Ouvrir dans StackEdit</button>
       <button id="copyTextButton">✂️ Copier</button>
     </div>
   </main>
+
   <!-- StackEdit.js -->
   <script src="https://unpkg.com/stackedit-js@1.0.7/docs/lib/stackedit.min.js"></script>
-  <!-- CodeMirror 6 : on importe les modules via des scripts de type "module" -->
-  <script type="module">
-    import { EditorState } from "https://cdn.jsdelivr.net/npm/@codemirror/state@6.2.0/dist/index.js";
-    import { EditorView, keymap } from "https://cdn.jsdelivr.net/npm/@codemirror/view@6.10.0/dist/index.js";
-    import { defaultKeymap } from "https://cdn.jsdelivr.net/npm/@codemirror/commands@6.2.0/dist/index.js";
-    import { history, historyKeymap } from "https://cdn.jsdelivr.net/npm/@codemirror/history@6.2.0/dist/index.js";
-    import { markdown, markdownLanguage } from "https://cdn.jsdelivr.net/npm/@codemirror/lang-markdown@6.2.0/dist/index.js";
-    import { languages } from "https://cdn.jsdelivr.net/npm/@codemirror/language-data@6.3.0/dist/index.js";
-    import { oneDark } from "https://cdn.jsdelivr.net/npm/@codemirror/theme-one-dark@6.2.0/dist/index.js";
-
-    // Création de l'état initial avec quelques extensions utiles
-    const startState = EditorState.create({
-      doc: "",
-      extensions: [
-        keymap.of([...defaultKeymap, ...historyKeymap]),
-        history(),
-        markdown({ base: markdownLanguage, codeLanguages: languages }),
-        oneDark,
-        EditorView.lineWrapping
-      ]
-    });
-
-    // Création de l'éditeur dans le conteneur #editor
-    const editor = new EditorView({
-      state: startState,
-      parent: document.getElementById("editor")
-    });
-
-    // Fonction pour remplacer le contenu de l'éditeur
-    function updateEditorContent(content) {
-      const transaction = editor.state.update({
-        changes: { from: 0, to: editor.state.doc.length, insert: content }
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Initialisation de CodeMirror
+      var editor = CodeMirror(document.getElementById("editor"), {
+        value: "",
+        mode: "gfm",             // GitHub Flavored Markdown
+        theme: "dracula",       // Thème coloré
+        lineNumbers: true,
+        lineWrapping: true
       });
-      editor.dispatch(transaction);
-    }
 
-    // Fonction pour récupérer le contenu de l'éditeur
-    function getEditorContent() {
-      return editor.state.doc.toString();
-    }
+      // Ajuste la taille de CodeMirror à 100% de largeur, et hauteur auto
+      editor.setSize("100%", "auto");
 
-    // Intégration avec StackEdit
-    const stackedit = new Stackedit();
-    stackedit.on("fileChange", file => {
-      updateEditorContent(file.content.text || "");
-    });
+      var stackedit = new Stackedit();
 
-    // Fonction de chargement d'un fichier Markdown depuis une URL
-    function loadMarkdown(url) {
-      fetch(url)
-        .then(response => {
-          if (!response.ok) throw new Error("Erreur lors du chargement du fichier.");
-          return response.text();
-        })
-        .then(data => {
-          updateEditorContent(data);
-        })
-        .catch(error => {
-          console.error("Erreur :", error);
-          updateEditorContent("Erreur lors du chargement du fichier : " + error.message);
-        });
-    }
+      // Écoute des changements depuis StackEdit
+      stackedit.on('fileChange', function(file) {
+        editor.setValue(file.content.text || "");
+      });
 
-    // Fonction de chargement d'un gist GitHub
-    function loadGist(username, gistId) {
-      const apiUrl = "https://api.github.com/gists/" + gistId;
-      fetch(apiUrl)
-        .then(response => {
-          if (!response.ok) throw new Error("Erreur lors du chargement du gist.");
-          return response.json();
-        })
-        .then(data => {
-          const files = data.files;
-          const fileNames = Object.keys(files);
-          if (fileNames.length > 0) {
-            updateEditorContent(files[fileNames[0]].content);
+      // Fonction de chargement d'un fichier Markdown depuis une URL
+      function loadMarkdown(url) {
+        fetch(url)
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error("Erreur lors du chargement du fichier.");
+            }
+            return response.text();
+          })
+          .then(function(data) {
+            editor.setValue(data);
+          })
+          .catch(function(error) {
+            console.error("Erreur :", error);
+            editor.setValue("Erreur lors du chargement du fichier : " + error.message);
+          });
+      }
+
+      // Fonction de chargement d'un gist GitHub
+      function loadGist(username, gistId) {
+        var apiUrl = "https://api.github.com/gists/" + gistId;
+        fetch(apiUrl)
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error("Erreur lors du chargement du gist.");
+            }
+            return response.json();
+          })
+          .then(function(data) {
+            var files = data.files;
+            var fileNames = Object.keys(files);
+            if (fileNames.length > 0) {
+              editor.setValue(files[fileNames[0]].content);
+            } else {
+              editor.setValue("Aucun fichier trouvé dans ce gist.");
+            }
+          })
+          .catch(function(error) {
+            console.error("Erreur :", error);
+            editor.setValue("Erreur lors du chargement du gist : " + error.message);
+          });
+      }
+
+      // Analyse du hash dans l'URL (#!url:... ou #!gist:...)
+      if (window.location.hash) {
+        var hash = window.location.hash;
+        if (hash.startsWith("#!url:")) {
+          var fileUrl = hash.replace("#!url:", "");
+          loadMarkdown(fileUrl);
+        } else if (hash.startsWith("#!gist:")) {
+          var gistInfo = hash.replace("#!gist:", "");
+          var parts = gistInfo.split("/");
+          if (parts.length === 2) {
+            var username = parts[0];
+            var gistId = parts[1];
+            loadGist(username, gistId);
           } else {
-            updateEditorContent("Aucun fichier trouvé dans ce gist.");
+            editor.setValue("Format de gist invalide. Utilisez : #!gist:username/gist-id");
           }
-        })
-        .catch(error => {
-          console.error("Erreur :", error);
-          updateEditorContent("Erreur lors du chargement du gist : " + error.message);
-        });
-    }
-
-    // Analyse du hash dans l'URL pour charger du contenu
-    if (window.location.hash) {
-      const hash = window.location.hash;
-      if (hash.startsWith("#!url:")) {
-        const fileUrl = hash.replace("#!url:", "");
-        loadMarkdown(fileUrl);
-      } else if (hash.startsWith("#!gist:")) {
-        const gistInfo = hash.replace("#!gist:", "");
-        const parts = gistInfo.split("/");
-        if (parts.length === 2) {
-          const username = parts[0];
-          const gistId = parts[1];
-          loadGist(username, gistId);
-        } else {
-          updateEditorContent("Format de gist invalide. Utilisez : #!gist:username/gist-id");
         }
       }
-    }
 
-    // Bouton : Ouvrir dans StackEdit
-    document.getElementById("editStackEdit").addEventListener("click", () => {
-      const content = getEditorContent();
-      stackedit.openFile({
-        name: "Document Markdown",
-        content: { text: content }
-      });
-    });
-
-    // Bouton : Copier le contenu dans le presse-papiers
-    document.getElementById("copyTextButton").addEventListener("click", () => {
-      const content = getEditorContent();
-      navigator.clipboard.writeText(content)
-        .then(() => {
-          document.getElementById("copyTextButton").innerText = "✅ Copié";
-          setTimeout(() => {
-            document.getElementById("copyTextButton").innerText = "✂️ Copier";
-          }, 2000);
-        })
-        .catch(error => {
-          console.error("Erreur lors de la copie du texte :", error);
+      // Bouton « Ouvrir dans StackEdit »
+      document.getElementById("editStackEdit").addEventListener("click", function() {
+        var content = editor.getValue();
+        stackedit.openFile({
+          name: "Document Markdown",
+          content: {
+            text: content
+          }
         });
+      });
+
+      // Bouton « Copier »
+      var copyBtn = document.getElementById("copyTextButton");
+      copyBtn.addEventListener("click", function() {
+        var content = editor.getValue();
+        navigator.clipboard.writeText(content)
+          .then(function() {
+            copyBtn.innerText = "✅ Copié";
+            setTimeout(function() {
+              copyBtn.innerText = "✂️ Copier";
+            }, 2000);
+          })
+          .catch(function(error) {
+            console.error("Erreur lors de la copie du texte :", error);
+          });
+      });
     });
   </script>
 </body>
