@@ -8,86 +8,34 @@
   <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
-  <!-- Highlight.js avec le thème github-dark -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- CodeMirror (CSS + JS + mode Markdown + un thème de votre choix) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.css" />
+  <!-- Thème CodeMirror (exemple : "material-darker") -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/theme/material-darker.css" />
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/markdown/markdown.js"></script>
 
   <style>
     body {
       max-width: 800px;
       margin: 2rem auto;
     }
-
-    /* Conteneur de l'éditeur */
-    #editor-container {
-      position: relative;
+    /* Conteneur de l'éditeur CodeMirror */
+    #editor {
+      height: 500px; /* Ajustez la hauteur selon vos besoins */
       border: 1px solid #ccc;
-      border-radius: 3px;
-      overflow: hidden;
-      font-family: monospace;
-      line-height: 1.5;
+      margin-bottom: 1rem;
     }
-
-    /* Bloc de code coloré par highlight.js */
-    #editor-container pre {
-      margin: 0;
-      padding: 1rem;
-      /* Empêche la sélection et les clics dans le bloc de code */
-      pointer-events: none;
-      user-select: none;
-
-      /* Pour que le texte "wrap" comme dans le textarea */
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      overflow: auto;
-      min-height: 15em;
-    }
-
-    /* Le <code> lui-même */
-    #highlighted-code {
-      font-size: 1rem;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    /* Le textarea transparent pour la saisie */
-    #editor-container textarea {
-      position: absolute;
-      top: 0;
-      left: 0;
-      margin: 0;
-      padding: 1rem;
-      width: 100%;
+    /* Forcer la hauteur dans CodeMirror */
+    .CodeMirror {
       height: 100%;
-      border: none;
-      outline: none;
-      resize: vertical;
-      background: transparent;
-      /* Masque le texte, même lors de la sélection */
-      color: transparent;
-      -webkit-text-fill-color: transparent;
-      caret-color: #fff;
-
-      /* Même font-size et line-height que le bloc code */
-      font-family: monospace;
-      font-size: 1rem;
-      line-height: 1.5;
-
-      /* Pour gérer les retours à la ligne comme le code */
-      white-space: pre-wrap;
-      word-wrap: break-word;
-
-      z-index: 2;
     }
-
-    /* Boutons en bas */
+    /* Boutons */
     .button-container {
       margin-top: 1rem;
       display: flex;
       gap: 1rem;
     }
-
     button {
       padding: 0.5rem 1rem;
       border: none;
@@ -108,13 +56,8 @@
   </header>
 
   <main>
-    <!-- Zone d'édition avec overlay pour la coloration syntaxique -->
-    <div id="editor-container">
-      <pre>
-        <code id="highlighted-code" class="markdown"></code>
-      </pre>
-      <textarea id="markdown" placeholder="Le contenu Markdown chargé s’affichera ici..." rows="15"></textarea>
-    </div>
+    <!-- Zone d'édition CodeMirror -->
+    <div id="editor"></div>
     <div class="button-container">
       <button id="editStackEdit">Ouvrir dans StackEdit</button>
       <button id="copyTextButton">✂️ Copier</button>
@@ -125,30 +68,20 @@
   <script src="https://unpkg.com/stackedit-js@1.0.7/docs/lib/stackedit.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      var textarea = document.getElementById("markdown");
-      var codeElement = document.getElementById("highlighted-code");
-      var stackedit = new Stackedit();
-
-      // Met à jour le bloc de code avec la coloration via highlight.js
-      function updateHighlighting() {
-        codeElement.textContent = textarea.value;
-        hljs.highlightElement(codeElement);
-      }
-
-      // Synchronisation du défilement entre textarea et bloc de code
-      textarea.addEventListener("scroll", function() {
-        var pre = document.querySelector("#editor-container pre");
-        pre.scrollTop = textarea.scrollTop;
-        pre.scrollLeft = textarea.scrollLeft;
+      // Initialisation de CodeMirror
+      var editor = CodeMirror(document.getElementById("editor"), {
+        value: "",
+        mode: "markdown",
+        theme: "material-darker",  // ou un autre thème
+        lineNumbers: true,
+        lineWrapping: true
       });
 
-      // Actualisation en temps réel lors de la saisie
-      textarea.addEventListener("input", updateHighlighting);
+      var stackedit = new Stackedit();
 
-      // Mise à jour lors d'un changement dans StackEdit
+      // Écoute des changements depuis StackEdit (si on l'utilise)
       stackedit.on('fileChange', function(file) {
-        textarea.value = file.content.text;
-        updateHighlighting();
+        editor.setValue(file.content.text || "");
       });
 
       // Fonction de chargement d'un fichier Markdown depuis une URL
@@ -161,13 +94,11 @@
             return response.text();
           })
           .then(function(data) {
-            textarea.value = data;
-            updateHighlighting();
+            editor.setValue(data);
           })
           .catch(function(error) {
             console.error("Erreur :", error);
-            textarea.value = "Erreur lors du chargement du fichier : " + error.message;
-            updateHighlighting();
+            editor.setValue("Erreur lors du chargement du fichier : " + error.message);
           });
       }
 
@@ -185,20 +116,18 @@
             var files = data.files;
             var fileNames = Object.keys(files);
             if (fileNames.length > 0) {
-              textarea.value = files[fileNames[0]].content;
+              editor.setValue(files[fileNames[0]].content);
             } else {
-              textarea.value = "Aucun fichier trouvé dans ce gist.";
+              editor.setValue("Aucun fichier trouvé dans ce gist.");
             }
-            updateHighlighting();
           })
           .catch(function(error) {
             console.error("Erreur :", error);
-            textarea.value = "Erreur lors du chargement du gist : " + error.message;
-            updateHighlighting();
+            editor.setValue("Erreur lors du chargement du gist : " + error.message);
           });
       }
 
-      // Analyse de la partie hash de l'URL pour charger un fichier ou un gist
+      // Analyse du hash dans l'URL (#!url:... ou #!gist:...)
       if (window.location.hash) {
         var hash = window.location.hash;
         if (hash.startsWith("#!url:")) {
@@ -212,15 +141,14 @@
             var gistId = parts[1];
             loadGist(username, gistId);
           } else {
-            textarea.value = "Format de gist invalide. Utilisez : #!gist:username/gist-id";
-            updateHighlighting();
+            editor.setValue("Format de gist invalide. Utilisez : #!gist:username/gist-id");
           }
         }
       }
 
-      // Bouton pour ouvrir le contenu dans StackEdit
+      // Bouton « Ouvrir dans StackEdit »
       document.getElementById("editStackEdit").addEventListener("click", function() {
-        var content = textarea.value;
+        var content = editor.getValue();
         stackedit.openFile({
           name: "Document Markdown",
           content: {
@@ -229,10 +157,11 @@
         });
       });
 
-      // Bouton pour copier le contenu du textarea
+      // Bouton « Copier »
       var copyBtn = document.getElementById("copyTextButton");
       copyBtn.addEventListener("click", function() {
-        navigator.clipboard.writeText(textarea.value)
+        var content = editor.getValue();
+        navigator.clipboard.writeText(content)
           .then(function() {
             copyBtn.innerText = "✅ Copié";
             setTimeout(function() {
