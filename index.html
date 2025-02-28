@@ -9,10 +9,14 @@
   <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
 
-  <!-- CodeMirror (CSS + JS + mode GFM + thème Dracula) -->
+  <!-- CodeMirror : CSS de base + thème Dracula -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/theme/dracula.min.css" />
+
+  <!-- CodeMirror : scripts de base + modes requis -->
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/xml/xml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/addon/mode/overlay.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/markdown/markdown.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.9/mode/gfm/gfm.js"></script>
 
@@ -24,13 +28,13 @@
     /* Conteneur CodeMirror redimensionnable en hauteur */
     #editor {
       resize: vertical;       /* Permet le redimensionnement vertical */
-      overflow: auto;         /* Ajoute des barres de défilement si nécessaire */
+      overflow: auto;         /* Barres de défilement si nécessaire */
       border: 1px solid #ccc;
       border-radius: 4px;
       margin-bottom: 1rem;
       min-height: 300px;      /* Hauteur minimale */
     }
-    /* Ajustements de CodeMirror pour qu'il s'adapte à la hauteur du conteneur */
+    /* Ajustements CodeMirror pour qu'il suive la hauteur du conteneur */
     .CodeMirror {
       height: auto;
       min-height: 300px;      /* Même valeur que le conteneur */
@@ -81,12 +85,12 @@
         lineWrapping: true
       });
 
-      // Ajuste la taille de CodeMirror pour qu'elle suive le conteneur
+      // Ajuste la taille de CodeMirror à 100% de largeur, et hauteur auto
       editor.setSize("100%", "auto");
 
       var stackedit = new Stackedit();
 
-      // Écoute des changements depuis StackEdit (si on l'utilise)
+      // Écoute des changements depuis StackEdit
       stackedit.on('fileChange', function(file) {
         editor.setValue(file.content.text || "");
       });
