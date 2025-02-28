@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>StackEdit.js Loader</title>
+  <!-- Inclusion de Beer CSS pour un style léger -->
+  <link rel="stylesheet" href="https://unpkg.com/beer-css@latest/dist/beer.min.css">
+  <style>
+    /* Quelques ajustements de style pour une meilleure ergonomie */
+    body {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    textarea {
+      width: 100%;
+      font-family: monospace;
+      font-size: 1rem;
+      padding: 1rem;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    button {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>StackEdit.js Loader</h1>
+    <p>
+      Chargez un fichier Markdown en passant dans l’URL l’un des formats suivants :<br>
+      <code>#!url:https://url-du-fichier.md</code> ou <code>#!gist:username/gist-id</code>
+    </p>
+  </header>
+
+  <main>
+    <textarea id="markdown" placeholder="Le contenu Markdown chargé s’affichera ici..." rows="15"></textarea>
+    <button id="editStackEdit">Ouvrir dans StackEdit</button>
+  </main>
+
+  <!-- Inclusion de StackEdit.js -->
+  <script src="https://benweet.github.io/stackedit.js/stackedit.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var textarea = document.getElementById("markdown");
+      var stackedit = new Stackedit();
+
+      // Fonction de chargement d'un fichier Markdown depuis une URL
+      function loadMarkdown(url) {
+        fetch(url)
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error("Erreur lors du chargement du fichier.");
+            }
+            return response.text();
+          })
+          .then(function(data) {
+            textarea.value = data;
+          })
+          .catch(function(error) {
+            console.error("Erreur :", error);
+            textarea.value = "Erreur lors du chargement du fichier : " + error.message;
+          });
+      }
+
+      // Fonction de chargement d'un gist GitHub
+      function loadGist(username, gistId) {
+        var apiUrl = "https://api.github.com/gists/" + gistId;
+        fetch(apiUrl)
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error("Erreur lors du chargement du gist.");
+            }
+            return response.json();
+          })
+          .then(function(data) {
+            // On récupère le contenu du premier fichier trouvé
+            var files = data.files;
+            var fileNames = Object.keys(files);
+            if (fileNames.length > 0) {
+              textarea.value = files[fileNames[0]].content;
+            } else {
+              textarea.value = "Aucun fichier trouvé dans ce gist.";
+            }
+          })
+          .catch(function(error) {
+            console.error("Erreur :", error);
+            textarea.value = "Erreur lors du chargement du gist : " + error.message;
+          });
+      }
+
+      // Analyse de la partie hash de l'URL
+      if (window.location.hash) {
+        var hash = window.location.hash;
+        if (hash.startsWith("#!url:")) {
+          var fileUrl = hash.replace("#!url:", "");
+          loadMarkdown(fileUrl);
+        } else if (hash.startsWith("#!gist:")) {
+          var gistInfo = hash.replace("#!gist:", "");
+          var parts = gistInfo.split("/");
+          if (parts.length === 2) {
+            var username = parts[0];
+            var gistId = parts[1];
+            loadGist(username, gistId);
+          } else {
+            textarea.value = "Format de gist invalide. Utilisez : #!gist:username/gist-id";
+          }
+        }
+      }
+
+      // Bouton pour ouvrir le contenu dans StackEdit
+      document.getElementById("editStackEdit").addEventListener("click", function() {
+        var content = textarea.value;
+        stackedit.openFile({
+          name: "Document Markdown",
+          content: {
+            text: content
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
