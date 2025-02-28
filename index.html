@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>StackEdit.js Loader</title>
-<link href="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.css" rel="stylesheet" />
-<script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.css" rel="stylesheet" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.6/dist/cdn/beer.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
   <style>
     body {
       max-width: 800px;
@@ -19,8 +19,18 @@
       box-sizing: border-box;
       resize: vertical;
     }
-    button {
+    .button-container {
       margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      cursor: pointer;
+      background: #333;
+      color: #fff;
+      border-radius: 3px;
     }
   </style>
 </head>
@@ -35,14 +45,22 @@
 
   <main>
     <textarea id="markdown" placeholder="Le contenu Markdown chargé s’affichera ici..." rows="15"></textarea>
-    <button id="editStackEdit">Ouvrir dans StackEdit</button>
+    <div class="button-container">
+      <button id="editStackEdit">Ouvrir dans StackEdit</button>
+      <button id="copyTextButton">✂️ Copier</button>
+    </div>
   </main>
 
-<script src="https://unpkg.com/stackedit-js@1.0.7/docs/lib/stackedit.min.js"></script>
+  <script src="https://unpkg.com/stackedit-js@1.0.7/docs/lib/stackedit.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       var textarea = document.getElementById("markdown");
       var stackedit = new Stackedit();
+
+      // Mise à jour du contenu du textarea lorsque StackEdit signale un changement
+      stackedit.on('fileChange', function(file) {
+        textarea.value = file.content.text;
+      });
 
       // Fonction de chargement d'un fichier Markdown depuis une URL
       function loadMarkdown(url) {
@@ -73,7 +91,6 @@
             return response.json();
           })
           .then(function(data) {
-            // On récupère le contenu du premier fichier trouvé
             var files = data.files;
             var fileNames = Object.keys(files);
             if (fileNames.length > 0) {
@@ -116,6 +133,21 @@
             text: content
           }
         });
+      });
+
+      // Bouton pour copier le contenu du textarea
+      var copyBtn = document.getElementById("copyTextButton");
+      copyBtn.addEventListener("click", function() {
+        navigator.clipboard.writeText(textarea.value)
+          .then(function() {
+            copyBtn.innerText = "✅ Copié";
+            setTimeout(function() {
+              copyBtn.innerText = "✂️ Copier";
+            }, 2000);
+          })
+          .catch(function(error) {
+            console.error("Erreur lors de la copie du texte :", error);
+          });
       });
     });
   </script>
